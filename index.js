@@ -71,14 +71,14 @@ async function run() {
         // user releted api
         // save or update a user in db 
         app.post('/users/:email', async (req, res) => {
-            const email = req.body.email
+            const email = req.params.email
             const user = req.body
             // check if user exists in db
             const isExist = await usersCollection.findOne({ email: email })
             if (isExist) {
                 return res.send(isExist)
             }
-            const result = await usersCollection.insertOne({ ...user, role: 'member', timestamp: Date.now() })
+            const result = await usersCollection.insertOne({ ...user, role: 'member' })
             res.send(result)
         })
 
