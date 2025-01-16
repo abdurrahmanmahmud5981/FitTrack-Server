@@ -78,7 +78,7 @@ async function run() {
             }
             res.send(user)
         })
-        // save or update a user in db 
+        // save  a user in db 
         app.post('/users/:email', async (req, res) => {
             const email = req.params.email
             const user = req.body
@@ -89,6 +89,21 @@ async function run() {
             }
             const result = await usersCollection.insertOne({ ...user, role: 'member' })
             res.send(result)
+        })
+        // update user info in db 
+        app.patch('/users/:id', async (req, res) => {
+            const id = new ObjectId(req.params.id)
+            const updatedUser = req.body
+            const result = await usersCollection.updateOne(
+                { _id: id },
+                {
+                    $set: {
+                        name: updatedUser.name,
+                        image: updatedUser.image
+                    }
+                }
+            )
+            res.send(updatedUser)
         })
 
         await client.db('admin').command({ ping: 1 })
