@@ -26,7 +26,7 @@ app.use(morgan('dev'))
 
 
 // verify token 
-const varifyToken = (req, res, next) => {
+const verifyToken = (req, res, next) => {
     // console.log(req.headers);
     if (!req.headers.authorization) {
         return res.status(401).send({ message: 'forbidden! No token provided.' });
@@ -59,6 +59,7 @@ async function run() {
         const db = client.db('fit-track-DB');
         const usersCollection = db.collection('users');
         const subscribersCollection = db.collection('subscribers');
+        const trainersCollection = db.collection('trainers');
 
 
         // jwt releted api 
@@ -87,6 +88,7 @@ async function run() {
             const result = await subscribersCollection.insertOne(subscriber)
             res.send(result)
         })
+
 
         // user releted api
         // get a user by email
@@ -125,6 +127,29 @@ async function run() {
             )
             res.send(updatedUser)
         })
+
+
+
+        // Trainer releted api 
+        // get all trainers only for admin
+        app.get('/trainers', verifyToken, async (req, res) => {
+            const result = await trainersCollection.find().toArray()
+            res.send(result)
+        })
+        // save  a trainer in db 
+        app.post('/trainers', verifyToken, async (req, res) => {
+            const trainer = req.body
+            const email = trainer.email;
+            // check if user exists in db
+            const isExist = await trainersCollection.findOne({ email: email })
+            if (isExist) {
+                return res.send({ message : 'You have already applied.'})
+            }
+            const result = await trainersCollection.insertOne(trainer)
+            res.send(result)
+        })
+
+        // get a trainer by id
 
         await client.db('admin').command({ ping: 1 })
         console.log(
