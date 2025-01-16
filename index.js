@@ -58,6 +58,8 @@ async function run() {
     try {
         const db = client.db('fit-track-DB');
         const usersCollection = db.collection('users');
+        const subscribersCollection = db.collection('subscribers');
+
 
         // jwt releted api 
         app.post('/jwt', async (req, res) => {
@@ -67,6 +69,24 @@ async function run() {
             res.send({ token });
         })
 
+        // subscribers releted api 
+        // get all subscribers only for admin
+        app.get('/subscribers', async (req, res) => {
+            const result = await subscribersCollection.find().toArray()
+            res.send(result)
+        })
+        // save  a subscriber in db 
+        app.post('/subscribers', async (req, res) => {
+            const subscriber = req.body
+            const email = subscriber.email;
+            // check if user exists in db
+            const isExist = await subscribersCollection.findOne({ email: email })
+            if (isExist) {
+                return res.send({ message : 'You have already subscribed to this newsletter.'})
+            }
+            const result = await subscribersCollection.insertOne(subscriber)
+            res.send(result)
+        })
 
         // user releted api
         // get a user by email
