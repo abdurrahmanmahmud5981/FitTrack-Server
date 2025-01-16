@@ -66,9 +66,18 @@ async function run() {
             const token = jwt.sign(user, process.env.TOKEN_SECRET, { expiresIn: '9h' })
             res.send({ token });
         })
-        
+
 
         // user releted api
+        // get a user by email
+        app.get('/users/:email', async (req, res) => {
+            const email = req.params.email
+            const user = await usersCollection.findOne({ email: email })
+            if (!user) {
+                return res.status(404).send({ message: 'User not found.' })
+            }
+            res.send(user)
+        })
         // save or update a user in db 
         app.post('/users/:email', async (req, res) => {
             const email = req.params.email
