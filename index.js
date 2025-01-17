@@ -152,9 +152,12 @@ async function run() {
 
         //Class releted api 
 
-        // get all class only for admin
-        app.get('/classes', verifyToken, async (req, res) => {
-            const result = await classesCollection.find().toArray()
+        // get 6 class for home page
+        app.get('/featured-classes', async (req, res) => {
+            const result = await classesCollection.aggregate([
+                { $sort: { totalBookings: -1 } },
+                { $limit: 6 },
+            ]).toArray()
             res.send(result)
         })
 
