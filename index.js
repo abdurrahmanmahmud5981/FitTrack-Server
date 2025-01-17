@@ -60,6 +60,7 @@ async function run() {
         const usersCollection = db.collection('users');
         const subscribersCollection = db.collection('subscribers');
         const trainersCollection = db.collection('trainers');
+        const classesCollection = db.collection('classes');
 
 
         // jwt releted api 
@@ -83,7 +84,7 @@ async function run() {
             // check if user exists in db
             const isExist = await subscribersCollection.findOne({ email: email })
             if (isExist) {
-                return res.send({ message : 'You have already subscribed to this newsletter.'})
+                return res.send({ message: 'You have already subscribed to this newsletter.' })
             }
             const result = await subscribersCollection.insertOne(subscriber)
             res.send(result)
@@ -143,13 +144,53 @@ async function run() {
             // check if user exists in db
             const isExist = await trainersCollection.findOne({ email: email })
             if (isExist) {
-                return res.send({ message : 'You have already applied.'})
+                return res.send({ message: 'You have already applied.' })
             }
             const result = await trainersCollection.insertOne(trainer)
             res.send(result)
         })
 
-        // get a trainer by id
+        //Class releted api 
+
+        // get all class only for admin
+        app.get('/classes', verifyToken, async (req, res) => {
+            const result = await classesCollection.find().toArray()
+            res.send(result)
+        })
+
+        // add a class only for admin 
+        app.post('/classes', verifyToken, verifyToken, async (req, res) => {
+            const classObj = req.body
+            const result = await classesCollection.insertOne({ ...classObj, totalBookings: 0 })
+            res.send(result)
+        })
+
+        // get a class by id
+        app.get('/classes/:id', async (req, res) => {
+            const id = new ObjectId(req.params.id)
+            const classObj = await classesCollection.findOne({ _id: id })
+            if (!classObj) {
+                return res.status(404).send({ message: 'Class not found.' })
+            }
+            res.send(classObj)
+        })
+
+        // update class info in db
+        app.patch('/classes/:id', verifyToken, async (req, res) => {
+            const id = new ObjectId(req.params.id)
+            const updatedClass = req.body
+            const result = await classesCollection.updateOne(
+                { _id: id },
+                {
+                    $set: {
+                        name: updatedClass.name,
+                        description: updatedClass.description,
+                        trainer: updatedClass.trainer
+                    }
+                }
+            )
+            res.send(updatedClass)
+        })
 
         await client.db('admin').command({ ping: 1 })
         console.log(
