@@ -61,7 +61,9 @@ async function run() {
         const subscribersCollection = db.collection('subscribers');
         const trainersCollection = db.collection('trainers');
         const classesCollection = db.collection('classes');
-        const forumPostsCollection = db.collection('forum-posts');//
+        const forumPostsCollection = db.collection('forum-posts');
+        const slotsCollection = db.collection('slotes');
+
 
 
         // jwt releted api 
@@ -242,7 +244,11 @@ async function run() {
             res.send(updatedClass)
         })
 
-
+        // slotes releted api 
+        app.post('/slots', verifyToken, async (req, res) => {
+            const result = await slotsCollection.insertOne(req.body);
+            res.send(result)
+        })
 
         // forum-posts releted api -------------------------
         // get latest 6  posts for home page
