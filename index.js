@@ -145,7 +145,7 @@ async function run() {
 
         // Trainer releted api ----------------------------------
         // get all trainers only for admin
-        app.get('/trainers', verifyToken, async (req, res) => {
+        app.get('/trainers', async (req, res) => {
             const result = await trainersCollection.find().toArray()
             res.send(result)
         })
