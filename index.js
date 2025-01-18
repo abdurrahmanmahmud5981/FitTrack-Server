@@ -61,6 +61,7 @@ async function run() {
         const subscribersCollection = db.collection('subscribers');
         const trainersCollection = db.collection('trainers');
         const classesCollection = db.collection('classes');
+        const forumPostsCollection = db.collection('forum-posts');//
 
 
         // jwt releted api 
@@ -182,11 +183,7 @@ async function run() {
                 classes,
                 totalPages: Math.ceil(totalCount / limitNumber),
             });
-            // const result = await classesCollection.aggregate([
-            //     { $sort: { totalBookings: -1 } },
-            //     { $limit: 6 },
-            // ]).toArray()
-            // res.send(result)
+
         })
 
         // add a class only for admin 
@@ -221,6 +218,68 @@ async function run() {
                 }
             )
             res.send(updatedClass)
+        })
+
+
+
+        // forum-posts releted api 
+        // get all forum-posts 
+        app.get('/forum-posts', async (req, res) => {
+            const { page = 1, limit = 6 } = req.query;
+
+            // Convert page and limit to numbers
+            const pageNumber = parseInt(page);
+            const limitNumber = parseInt(limit);
+
+            // Fetch posts with pagination and populate trainers
+            const posts = await forumPostsCollection.find()
+                .skip((pageNumber - 1) * limitNumber) // Skip records for pagination
+                .limit(limitNumber).toArray(); // Limit results to the specified number
+
+            // Total count of posts
+            const totalCount = await forumPostsCollection.countDocuments();
+
+            res.status(200).json({
+                success: true,
+                posts,
+                totalPages: Math.ceil(totalCount / limitNumber),
+            });
+
+            // const result = await forumPostsCollection.find().toArray()
+            // res.send(result)
+        })
+        // save  a forum-post in db 
+        app.post('/forum-posts', verifyToken, async (req, res) => {
+            const forumPost = req.body
+            const result = await forumPostsCollection.insertOne(forumPost)
+            res.send(result)
+        })
+
+        // get a forum-post by id
+        app.get('/forum-posts/:id', async (req, res) => {
+            const id = new ObjectId(req.params.id)
+            const forumPost = await forumPostsCollection.findOne({ _id: id })
+            if (!forumPost) {
+                return res.status(404).send({ message: 'Forum-post not found.' })
+            }
+            res.send(forumPost)
+        })
+
+        // update forum-post info in db
+        app.patch('/forum-posts/:id', verifyToken, async (req, res) => {
+            const id = new ObjectId(req.params.id)
+            const updatedForumPost = req.body
+            const result = await forumPostsCollection.updateOne(
+                { _id: id },
+                {
+                    $set: {
+                        title: updatedForumPost.title,
+                        content: updatedForumPost.content,
+                        author: updatedForumPost.author
+                    }
+                }
+            )
+            res.send(updatedForumPost)
         })
 
         await client.db('admin').command({ ping: 1 })
