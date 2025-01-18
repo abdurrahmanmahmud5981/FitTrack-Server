@@ -94,13 +94,14 @@ async function run() {
 
         // user releted api
         // get user role by email 
-        app.get('/users/role//:email', async (req, res) => {
+        app.get('/users/role/:email', async (req, res) => {
             const email = req.params.email
+            console.log(email);
             const user = await usersCollection.findOne({ email: email })
             if (!user) {
                 return res.status(404).send({ message: 'User not found.' })
             }
-            res.send({ role: user?.role })
+            res.send( user?.role )
         })
 
         // get a user by email
