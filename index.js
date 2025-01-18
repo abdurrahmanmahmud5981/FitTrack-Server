@@ -223,6 +223,15 @@ async function run() {
 
 
         // forum-posts releted api 
+        // get latest 6  posts for home page
+        app.get('/featured-posts', async (req, res) => {
+            const result = await forumPostsCollection.aggregate([
+                { $sort: { date: -1 } },
+                { $limit: 6 },
+            ]).toArray();
+            res.send(result)
+        }) 
+
         // get all forum-posts 
         app.get('/forum-posts', async (req, res) => {
             const { page = 1, limit = 6 } = req.query;
