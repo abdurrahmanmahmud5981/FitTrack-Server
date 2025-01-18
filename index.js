@@ -93,6 +93,16 @@ async function run() {
 
 
         // user releted api
+        // get user role by email 
+        app.get('/users/role//:email', async (req, res) => {
+            const email = req.params.email
+            const user = await usersCollection.findOne({ email: email })
+            if (!user) {
+                return res.status(404).send({ message: 'User not found.' })
+            }
+            res.send({ role: user?.role })
+        })
+
         // get a user by email
         app.get('/users/:email', async (req, res) => {
             const email = req.params.email
@@ -132,7 +142,7 @@ async function run() {
 
 
 
-        // Trainer releted api 
+        // Trainer releted api ----------------------------------
         // get all trainers only for admin
         app.get('/trainers', verifyToken, async (req, res) => {
             const result = await trainersCollection.find().toArray()
@@ -151,7 +161,7 @@ async function run() {
             res.send(result)
         })
 
-        //Class releted api 
+        //Class releted api ----------------------------------------
 
         // get 6 class for home page
         app.get('/featured-classes', async (req, res) => {
@@ -222,7 +232,7 @@ async function run() {
 
 
 
-        // forum-posts releted api 
+        // forum-posts releted api -------------------------
         // get latest 6  posts for home page
         app.get('/featured-posts', async (req, res) => {
             const result = await forumPostsCollection.aggregate([
