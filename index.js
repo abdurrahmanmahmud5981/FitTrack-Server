@@ -190,8 +190,8 @@ async function run() {
             res.send({ trainerId: trainer?._id })
         })
 
-        // update trainer info in db
-        app.patch('/trainers/applicants/confirm/:id', verifyToken, async (req, res) => { 
+        // update trainer status in db
+        app.patch('/trainers/applicants/confirm/:id', verifyToken, async (req, res) => {
             const id = new ObjectId(req.params.id)
             const email = req.body.email;
             console.log(id);
@@ -204,13 +204,31 @@ async function run() {
                 }
             )
             console.log(result);
-            const updateToTrainer = await usersCollection.findOneAndUpdate({email},{
+            const updateToTrainer = await usersCollection.findOneAndUpdate({ email }, {
                 $set: {
                     role: "trainer",
                 }
             })
             res.send(result)
         })
+        // reject aa applicent 
+        app.patch('/trainers/applicants/reject/:id', verifyToken, async (req, res) => {
+            const id = new ObjectId(req.params.id)
+            const feedback = req.body?.feedback;
+            console.log(feedback);
+            const result = await trainersCollection.updateOne(
+                { _id: id },
+                {
+                    $set: {
+                        status: "Rejected",
+                        feedback,
+                    }
+                }
+            )
+            console.log(result);
+            res.send(result)
+        })
+        // update trainer info in db
         // delete a trainer in db 
         app.delete('/trainers/:id', verifyToken, async (req, res) => {
             const id = new ObjectId(req.params.id)
