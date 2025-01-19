@@ -174,6 +174,14 @@ async function run() {
             }
             res.send(trainer)
         })
+        app.get('/trainer-status/:email', async (req, res) => {
+        
+            const trainer = await trainersCollection.findOne({ email: req.params?.email })
+            if (!trainer) {
+                return res.status(404).send({ message: 'Trainer not found.' })
+            }
+            res.send(trainer)
+        })
         // update trainer info in db
 
         //Class releted api ----------------------------------------
