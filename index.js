@@ -103,7 +103,7 @@ async function run() {
             if (!user) {
                 return res.status(404).send({ message: 'User not found.' })
             }
-            res.send( user?.role )
+            res.send(user?.role)
         })
 
         // get a user by email
@@ -165,7 +165,7 @@ async function run() {
         })
         // get a trainer by id 
         app.get('/trainers/:id', async (req, res) => {
-            
+
             const id = new ObjectId(req.params.id)
             const trainer = await trainersCollection.findOne({ _id: id })
             if (!trainer) {
@@ -228,11 +228,11 @@ async function run() {
         })
 
         // update class info in db
-        app.patch('/classes/:id', verifyToken, async (req, res) => {
-            const id = new ObjectId(req.params.id)
+        app.patch('/classes/:name', verifyToken, async (req, res) => {
+            const name = req.params.name;
             const updatedClass = req.body
             const result = await classesCollection.updateOne(
-                { _id: id },
+                { name: name },
                 {
                     $set: {
                         name: updatedClass.name,
@@ -242,6 +242,22 @@ async function run() {
                 }
             )
             res.send(updatedClass)
+        })
+        // incress totalbookings 
+        app.patch('/classes/increment-bookings/:name', verifyToken, async (req, res) => {
+            const name = req.params.name;
+            const result = await classesCollection.updateOne(
+                { name: name },
+                { $inc: { totalBookings: 1 } }
+            )
+            res.send(result)
+        })
+
+        // delete a class only for admin 
+        app.delete('/classes/:name', verifyToken, async (req, res) => {
+            const name = req.params.name;
+            const result = await classesCollection.deleteOne({ name: name })
+            res.send(result)
         })
 
         // slots releted api -------------------------------
@@ -258,7 +274,7 @@ async function run() {
         })
 
         // get a slot by id 
-        app.get('/single-slot/:id', verifyToken, async (req, res) =>{
+        app.get('/single-slot/:id', verifyToken, async (req, res) => {
             const id = new ObjectId(req.params.id)
             const slot = await slotsCollection.findOne({ _id: id })
             if (!slot) {
@@ -281,7 +297,7 @@ async function run() {
                 { $limit: 6 },
             ]).toArray();
             res.send(result)
-        }) 
+        })
 
         // get all forum-posts 
         app.get('/forum-posts', async (req, res) => {
@@ -345,17 +361,17 @@ async function run() {
 
 
         // create payment intent------------------------
-    app.post('/create-payment-intent', verifyToken, async (req, res) => {
-        const { amount } = req.body
-        const { client_secret } = await stripe.paymentIntents.create({
-          amount: amount,
-          currency: 'usd',
-          automatic_payment_methods: {
-            enabled: true,
-          },
+        app.post('/create-payment-intent', verifyToken, async (req, res) => {
+            const { amount } = req.body
+            const { client_secret } = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                automatic_payment_methods: {
+                    enabled: true,
+                },
+            })
+            res.send({ clientSecret: client_secret })
         })
-        res.send({ clientSecret: client_secret })
-      })
 
         await client.db('admin').command({ ping: 1 })
         console.log(
