@@ -63,6 +63,7 @@ async function run() {
         const classesCollection = db.collection('classes');
         const forumPostsCollection = db.collection('forum-posts');
         const slotsCollection = db.collection('slotes');
+        const bookingsCollection = db.collection('bookings');
 
 
 
@@ -372,6 +373,33 @@ async function run() {
             })
             res.send({ clientSecret: client_secret })
         })
+
+
+
+
+
+        // bookings releted api  -------------------------
+        // add bookings for a user 
+        app.post('/bookings', verifyToken, async (req, res) => {
+            const booking = req.body
+            const result = await bookingsCollection.insertOne(booking)
+            res.send(result)
+        })
+
+
+
+        // get all bookings for a user by email 
+        app.get('/bookings/:email', async (req, res) => {
+            const email = req.params.email
+            const user = await usersCollection.findOne({ email: email })
+            if (!user) {
+                return res.status(404).send({ message: 'User not found.' })
+            }
+            const bookings = await bookingsCollection.find({ userEmail: user.email }).toArray()
+            res.send(bookings)
+        })
+
+        // get a booking by id
 
         await client.db('admin').command({ ping: 1 })
         console.log(
