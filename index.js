@@ -4,7 +4,7 @@ const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
 const jwt = require('jsonwebtoken')
-
+const stripe = require('stripe')(process.env.CLIENT_SECRET_KEY)
 
 const morgan = require('morgan')
 
@@ -341,6 +341,21 @@ async function run() {
             )
             res.send(updatedForumPost)
         })
+
+
+
+        // create payment intent------------------------
+    app.post('/create-payment-intent', verifyToken, async (req, res) => {
+        const { amount } = req.body
+        const { client_secret } = await stripe.paymentIntents.create({
+          amount: amount,
+          currency: 'usd',
+          automatic_payment_methods: {
+            enabled: true,
+          },
+        })
+        res.send({ clientSecret: client_secret })
+      })
 
         await client.db('admin').command({ ping: 1 })
         console.log(
