@@ -182,6 +182,13 @@ async function run() {
             }
             res.send(trainer)
         })
+        // get trainer id 
+        app.get('/trainer-id/:email', async (req, res) => {
+
+            const trainer = await trainersCollection.findOne({ email: req.params?.email })
+            res.send({ trainerId: trainer?._id })
+        })
+
         // update trainer info in db
 
         //Class releted api ----------------------------------------
@@ -239,19 +246,45 @@ async function run() {
         // update class info in db
         app.patch('/classes/:name', verifyToken, async (req, res) => {
             const name = req.params.name;
-            const updatedClass = req.body
-            const result = await classesCollection.updateOne(
-                { name: name },
-                {
-                    $set: {
-                        name: updatedClass.name,
-                        description: updatedClass.description,
-                        trainer: updatedClass.trainer
-                    }
+            const newTrainer = req.body; // The new trainer to add
+
+            try {
+                // Check if the trainer already exists in the trainers array
+                const classExists = await classesCollection.findOne({
+                    name,
+                    "trainers.trainerId": newTrainer.trainerId, // Check if a trainer with this ID exists
+                });
+
+                if (classExists) {
+                    // If trainer exists, return a message with their details
+                    return res.status(200).send({
+                        message: "Trainer already exists in the class.",
+                        trainer: classExists.trainers.find(t => t.trainerId === newTrainer.trainerId),
+                    });
                 }
-            )
-            res.send(updatedClass)
-        })
+
+                // Add the new trainer to the trainers array using $addToSet
+                const result = await classesCollection.updateOne(
+                    { name }, // Find the class by name
+                    {
+                        $addToSet: { trainers: newTrainer }, // Add the new trainer if not already present
+                    }
+                );
+
+                if (result.modifiedCount > 0) {
+                    return res.status(200).send({
+                        message: "Trainer added successfully to the class.",
+                        trainer: newTrainer,
+                    });
+                }
+
+                res.status(404).send({ message: "Class not found." });
+            } catch (error) {
+                console.error("Error adding trainer:", error);
+                res.status(500).send({ message: "Internal server error", error });
+            }
+        });
+
         // incress totalbookings 
         app.patch('/classes/increment-bookings/:name', verifyToken, async (req, res) => {
             const name = req.params.name;
