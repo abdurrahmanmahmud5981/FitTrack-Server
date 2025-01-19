@@ -150,7 +150,8 @@ async function run() {
         // Trainer releted api ----------------------------------
         // get all trainers only for admin
         app.get('/trainers', async (req, res) => {
-            const result = await trainersCollection.find().toArray()
+            const {status} = req.query;
+            const result = await trainersCollection.find({status:status}).toArray()
             res.send(result)
         })
         // save  a trainer in db 
