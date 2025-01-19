@@ -166,8 +166,9 @@ async function run() {
             res.send(result)
         })
         // get a trainer by id 
-        app.get('/trainers/:email', async (req, res) => {
-            const trainer = await trainersCollection.findOne({ email: req.params?.email })
+        app.get('/trainers/:id', async (req, res) => {
+            const id = new ObjectId(req.params.id)
+            const trainer = await trainersCollection.findOne({ _id: id })
             if (!trainer) {
                 return res.status(404).send({ message: 'Trainer not found.' })
             }
