@@ -175,7 +175,7 @@ async function run() {
             res.send(trainer)
         })
         app.get('/trainer-status/:email', async (req, res) => {
-        
+
             const trainer = await trainersCollection.findOne({ email: req.params?.email })
             if (!trainer) {
                 return res.status(404).send({ message: 'Trainer not found.' })
@@ -339,15 +339,21 @@ async function run() {
             const result = await forumPostsCollection.insertOne(forumPost)
             res.send(result)
         })
-
-        // get a forum-post by id
-        app.get('/forum-posts/:id', async (req, res) => {
-            const id = new ObjectId(req.params.id)
-            const forumPost = await forumPostsCollection.findOne({ _id: id })
-            if (!forumPost) {
-                return res.status(404).send({ message: 'Forum-post not found.' })
+        // Manage upvotes and down votes
+        app.patch('/forum-posts/:id', async (req, res) => {
+            const id = req.params.id
+            const { type } = req.body
+            const filter = { _id: new ObjectId(id) }
+            let updateDoc = {
+                $inc: { 'votes.upvotes': 1 },
             }
-            res.send(forumPost)
+            if (type === 'down') {
+                updateDoc = {
+                    $inc: { 'votes.downvotes': 1 },
+                }
+            }
+            const result = await forumPostsCollection.updateOne(filter, updateDoc)
+            res.send(result)
         })
 
         // update forum-post info in db
