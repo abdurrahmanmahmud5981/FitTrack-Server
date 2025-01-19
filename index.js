@@ -455,7 +455,7 @@ async function run() {
         app.get('/admin/overview', verifyToken, async (req, res) => {
             const totalSubscribers = await subscribersCollection.estimatedDocumentCount();
             const bookings = await bookingsCollection.aggregate([
-                { $sort: { _id: 1 } },
+                { $sort: { _id: -1 } },
                 {
                     $addFields: {
                         _id: {
