@@ -184,8 +184,8 @@ async function run() {
         })
         // get trainer id 
         app.get('/trainer-id/:email', async (req, res) => {
-
             const trainer = await trainersCollection.findOne({ email: req.params?.email })
+            console.log(trainer, 'trainer');
             res.send({ trainerId: trainer?._id })
         })
 
