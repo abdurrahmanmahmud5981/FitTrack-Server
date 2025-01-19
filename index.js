@@ -297,6 +297,12 @@ async function run() {
             const result = await slotsCollection.insertOne(req.body);
             res.send(result)
         })
+        // delete a slot in db
+        app.delete('/slots/:id', verifyToken, async (req, res) => {
+            const id = new ObjectId(req.params.id)
+            const result = await slotsCollection.deleteOne({ _id: id })
+            res.send(result)
+        })
 
         // forum-posts releted api -------------------------
         // get latest 6  posts for home page
