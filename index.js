@@ -451,6 +451,44 @@ async function run() {
             const bookings = await bookingsCollection.find({ userEmail: user.email }).toArray()
             res.send(bookings)
         })
+        // get all bookings for admin only 
+        app.get('/admin/overview', verifyToken, async (req, res) => {
+            const totalSubscribers = await subscribersCollection.estimatedDocumentCount();
+            const bookings = await bookingsCollection.aggregate([
+                { $sort: { _id: 1 } },
+                {
+                    $addFields: {
+                        _id: {
+                            $dateToString: {
+                                format: '%d/%m/%Y',
+                                date: { $toDate: '$_id' },
+                            },
+                        },
+                    },
+                },
+
+                {
+                    $project: {
+                        _id: 1,
+                        price: 1,
+                        userName: 1,
+                        userEmail: 1,
+                        paymentId: 1,
+                        packageName: 1
+                    },
+                },
+
+            ]).toArray()
+            const { totalBalance } = await bookingsCollection.aggregate([
+                { $group: { _id: null, totalBalance: { $sum: '$price' } } },
+                {
+                    $project: {
+                        _id: 0
+                    }
+                }
+            ]).next()
+            res.send({ totalBalance, totalSubscribers, bookings })
+        })
 
         // reviews releted api 
         // add reviews for a class 
