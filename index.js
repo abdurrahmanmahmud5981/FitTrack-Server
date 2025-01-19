@@ -244,7 +244,7 @@ async function run() {
             res.send(updatedClass)
         })
 
-        // slotes releted api -------------------------------
+        // slots releted api -------------------------------
         // get all slots for a trainer by email 
         app.get('/slots/:email', async (req, res) => {
             const email = req.params.email
@@ -255,6 +255,16 @@ async function run() {
             }
             const slots = await slotsCollection.find({ trainerEmail: trainer.email }).toArray()
             res.send(slots)
+        })
+
+        // get a slot by id 
+        app.get('/single-slot/:id', verifyToken, async (req, res) =>{
+            const id = new ObjectId(req.params.id)
+            const slot = await slotsCollection.findOne({ _id: id })
+            if (!slot) {
+                return res.status(404).send({ message: 'Slot not found.' })
+            }
+            res.send(slot)
         })
 
         // save  a slot in db
