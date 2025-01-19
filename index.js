@@ -64,6 +64,7 @@ async function run() {
         const forumPostsCollection = db.collection('forum-posts');
         const slotsCollection = db.collection('slotes');
         const bookingsCollection = db.collection('bookings');
+        const reviewsCollection = db.collection('reviews');
 
 
 
@@ -399,7 +400,21 @@ async function run() {
             res.send(bookings)
         })
 
-        // get a booking by id
+        // reviews releted api 
+        // add reviews for a class 
+        app.post('/reviews', verifyToken, async (req, res) => {
+            const review = req.body
+            const result = await reviewsCollection.insertOne(review)
+            res.send(result)
+        })
+
+        // get all reviews for a class by classId 
+        app.get('/reviews', async (req, res) => {
+            const reviews = await reviewsCollection.find().toArray()
+            res.send(reviews)
+        })
+
+        // update user info in db
 
         await client.db('admin').command({ ping: 1 })
         console.log(
