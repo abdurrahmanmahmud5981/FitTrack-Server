@@ -150,8 +150,8 @@ async function run() {
         // Trainer releted api ----------------------------------
         // get all trainers only for admin
         app.get('/trainers', async (req, res) => {
-            const {status} = req.query;
-            const result = await trainersCollection.find({status:status}).toArray()
+            const { status } = req.query;
+            const result = await trainersCollection.find({ status: status }).toArray()
             res.send(result)
         })
         // save  a trainer in db 
@@ -191,6 +191,32 @@ async function run() {
         })
 
         // update trainer info in db
+        app.patch('/trainers/applicants/confirm/:id', verifyToken, async (req, res) => { 
+            const id = new ObjectId(req.params.id)
+            const email = req.body.email;
+            console.log(id);
+            const result = await trainersCollection.updateOne(
+                { _id: id },
+                {
+                    $set: {
+                        status: "Verified",
+                    }
+                }
+            )
+            console.log(result);
+            const updateToTrainer = await usersCollection.findOneAndUpdate({email},{
+                $set: {
+                    role: "trainer",
+                }
+            })
+            res.send(result)
+        })
+        // delete a trainer in db 
+        app.delete('/trainers/:id', verifyToken, async (req, res) => {
+            const id = new ObjectId(req.params.id)
+            const result = await trainersCollection.deleteOne({ _id: id })
+            res.send(result)
+        })
 
         //Class releted api ----------------------------------------
 
