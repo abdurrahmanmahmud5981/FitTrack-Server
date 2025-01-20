@@ -78,7 +78,7 @@ async function run() {
 
         // subscribers releted api 
         // get all subscribers only for admin
-        app.get('/subscribers', async (req, res) => {
+        app.get('/subscribers',verifyToken, async (req, res) => {
             const result = await subscribersCollection.find().toArray()
             res.send(result)
         })
@@ -232,8 +232,9 @@ async function run() {
         // delete a trainer in db 
         app.delete('/trainers/:id', verifyToken, async (req, res) => {
             const id = new ObjectId(req.params.id)
-            const result = await trainersCollection.deleteOne({ _id: id })
-            res.send(result)
+            console.log(id)
+            // const result = await trainersCollection.deleteOne({ _id: id })
+            // res.send(result)
         })
 
         //Class releted api ----------------------------------------
