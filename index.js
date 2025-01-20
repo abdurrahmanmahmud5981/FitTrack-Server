@@ -268,27 +268,42 @@ async function run() {
 
         // get all class 
         app.get('/classes', async (req, res) => {
-            const { page = 1, limit = 6 } = req.query;
-
-            // Convert page and limit to numbers
-            const pageNumber = parseInt(page);
-            const limitNumber = parseInt(limit);
-
-            // Fetch classes with pagination and populate trainers
-            const classes = await classesCollection.find()
+            try {
+              const { page = 1, limit = 6, search = '' } = req.query;
+          
+              // Convert page and limit to numbers
+              const pageNumber = parseInt(page);
+              const limitNumber = parseInt(limit);
+          
+              // Define the search condition
+              const searchCondition = search
+                ? { name: { $regex: search, $options: 'i' } } // Case-insensitive regex match
+                : {};
+          
+              // Fetch classes with pagination and search
+              const classes = await classesCollection
+                .find(searchCondition) // Apply search condition
                 .skip((pageNumber - 1) * limitNumber) // Skip records for pagination
-                .limit(limitNumber).toArray(); // Limit results to the specified number
-
-            // Total count of classes
-            const totalCount = await classesCollection.countDocuments();
-
-            res.status(200).json({
+                .limit(limitNumber) // Limit results to the specified number
+                .toArray();
+          
+              // Total count of classes matching the search condition
+              const totalCount = await classesCollection.countDocuments(searchCondition);
+          
+              res.status(200).json({
                 success: true,
                 classes,
                 totalPages: Math.ceil(totalCount / limitNumber),
-            });
-
-        })
+              });
+            } catch (error) {
+              console.error('Error fetching classes:', error);
+              res.status(500).json({
+                success: false,
+                message: 'An error occurred while fetching classes.',
+              });
+            }
+          });
+          
 
         // add a class only for admin 
         app.post('/classes', verifyToken, verifyToken, async (req, res) => {
