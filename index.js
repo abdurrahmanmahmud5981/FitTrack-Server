@@ -61,10 +61,10 @@ const verifyTrainer = (req, res, next) => {
     });
 };
 
-// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.fxybk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.fxybk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 
-const uri = `mongodb://localhost:27017`
+// const uri = `mongodb://localhost:27017`
 
 
 const client = new MongoClient(uri, {
@@ -83,7 +83,7 @@ async function run() {
         const trainersCollection = db.collection('trainers');
         const classesCollection = db.collection('classes');
         const forumPostsCollection = db.collection('forum-posts');
-        const slotsCollection = db.collection('slotes');
+        const slotsCollection = db.collection('slots');
         const bookingsCollection = db.collection('bookings');
         const reviewsCollection = db.collection('reviews');
 
@@ -606,10 +606,10 @@ async function run() {
 
         // update user info in db
 
-        await client.db('admin').command({ ping: 1 })
-        console.log(
-            'Pinged your deployment. You successfully connected to MongoDB!'
-        )
+        // await client.db('admin').command({ ping: 1 })
+        // console.log(
+        //     'Pinged your deployment. You successfully connected to MongoDB!'
+        // )
     } catch (error) {
         console.log(error);
     }
