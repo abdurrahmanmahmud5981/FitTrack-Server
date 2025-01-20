@@ -14,7 +14,7 @@ const app = express()
 
 // middleware
 const corsOptions = {
-    origin: ['http://localhost:5173', 'http://localhost:4173','https://fit-track-bd.web.app'],
+    origin: ['http://localhost:5173', 'http://localhost:4173', 'https://fit-track-bd.web.app'],
     credentials: true,
     optionSuccessStatus: 200,
 }
@@ -78,7 +78,7 @@ async function run() {
 
         // subscribers releted api 
         // get all subscribers only for admin
-        app.get('/subscribers',verifyToken, async (req, res) => {
+        app.get('/subscribers', verifyToken, async (req, res) => {
             const result = await subscribersCollection.find().toArray()
             res.send(result)
         })
@@ -228,13 +228,31 @@ async function run() {
             console.log(result);
             res.send(result)
         })
-        // update trainer info in db
+
         // delete a trainer in db 
         app.delete('/trainers/:id', verifyToken, async (req, res) => {
             const id = new ObjectId(req.params.id)
-            console.log(id)
-            // const result = await trainersCollection.deleteOne({ _id: id })
-            // res.send(result)
+            const email = req.query.email;
+            // delete from classes collection 
+            const result = await classesCollection.updateMany(
+                {}, // Match all documents in the collection
+                {
+                    $pull: { trainers: { trainerId: req.params.id } }, // Remove trainer by trainerId
+                }
+            );
+
+            // change role to member
+            const trainerToMember = await usersCollection.findOneAndUpdate({ email }, {
+                $set: {
+                    role: "member",
+                }
+            })
+            // delete his slots
+            const deleteSlot = await slotsCollection.deleteMany({ trainerEmail: email })
+            console.log(deleteSlot)
+            // remove him from trainers collection
+            const removed = await trainersCollection.deleteOne({ _id: id })
+            res.send(removed)
         })
 
         //Class releted api ----------------------------------------
@@ -309,7 +327,7 @@ async function run() {
                     });
                 }
 
-                // Add the new trainer to the trainers array using $addToSet
+                // Add the new trainer to the trainers 
                 const result = await classesCollection.updateOne(
                     { name }, // Find the class by name
                     {
