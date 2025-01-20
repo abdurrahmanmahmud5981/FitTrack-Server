@@ -40,6 +40,27 @@ const verifyToken = (req, res, next) => {
 
 }
 
+
+// Middleware for admin
+const verifyAdmin = (req, res, next) => {
+    verifyToken(req, res, () => {
+        if (req.decoded.role !== "admin") {
+            return res.status(403).send({ message: "Access denied! Admins only." });
+        }
+        next();
+    });
+};
+
+// Middleware for trainer
+const verifyTrainer = (req, res, next) => {
+    verifyToken(req, res, () => {
+        if (req.decoded.role !== "trainer") {
+            return res.status(403).send({ message: "Access denied! Trainers only." });
+        }
+        next();
+    });
+};
+
 // const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.fxybk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 
@@ -269,41 +290,41 @@ async function run() {
         // get all class 
         app.get('/classes', async (req, res) => {
             try {
-              const { page = 1, limit = 6, search = '' } = req.query;
-          
-              // Convert page and limit to numbers
-              const pageNumber = parseInt(page);
-              const limitNumber = parseInt(limit);
-          
-              // Define the search condition
-              const searchCondition = search
-                ? { name: { $regex: search, $options: 'i' } } // Case-insensitive regex match
-                : {};
-          
-              // Fetch classes with pagination and search
-              const classes = await classesCollection
-                .find(searchCondition) // Apply search condition
-                .skip((pageNumber - 1) * limitNumber) // Skip records for pagination
-                .limit(limitNumber) // Limit results to the specified number
-                .toArray();
-          
-              // Total count of classes matching the search condition
-              const totalCount = await classesCollection.countDocuments(searchCondition);
-          
-              res.status(200).json({
-                success: true,
-                classes,
-                totalPages: Math.ceil(totalCount / limitNumber),
-              });
+                const { page = 1, limit = 6, search = '' } = req.query;
+
+                // Convert page and limit to numbers
+                const pageNumber = parseInt(page);
+                const limitNumber = parseInt(limit);
+
+                // Define the search condition
+                const searchCondition = search
+                    ? { name: { $regex: search, $options: 'i' } } // Case-insensitive regex match
+                    : {};
+
+                // Fetch classes with pagination and search
+                const classes = await classesCollection
+                    .find(searchCondition) // Apply search condition
+                    .skip((pageNumber - 1) * limitNumber) // Skip records for pagination
+                    .limit(limitNumber) // Limit results to the specified number
+                    .toArray();
+
+                // Total count of classes matching the search condition
+                const totalCount = await classesCollection.countDocuments(searchCondition);
+
+                res.status(200).json({
+                    success: true,
+                    classes,
+                    totalPages: Math.ceil(totalCount / limitNumber),
+                });
             } catch (error) {
-              console.error('Error fetching classes:', error);
-              res.status(500).json({
-                success: false,
-                message: 'An error occurred while fetching classes.',
-              });
+                console.error('Error fetching classes:', error);
+                res.status(500).json({
+                    success: false,
+                    message: 'An error occurred while fetching classes.',
+                });
             }
-          });
-          
+        });
+
 
         // add a class only for admin 
         app.post('/classes', verifyToken, verifyToken, async (req, res) => {
