@@ -20,14 +20,13 @@ const corsOptions = {
 }
 app.use(cors(corsOptions))
 
-app.use(express.json())
+app.use(express.json()) 
 app.use(cookieParser())
 app.use(morgan('dev'))
 
 
 // verify token 
 const verifyToken = (req, res, next) => {
-    // console.log(req.headers);
     if (!req.headers.authorization) {
         return res.status(401).send({ message: 'forbidden! No token provided.' });
     }
@@ -92,7 +91,6 @@ async function run() {
         // jwt releted api 
         app.post('/jwt', async (req, res) => {
             const user = req.body;
-            console.log(user);
             const token = jwt.sign(user, process.env.TOKEN_SECRET, { expiresIn: '9h' })
             res.send({ token });
         })
@@ -121,7 +119,6 @@ async function run() {
         // get user role by email 
         app.get('/users/role/:email', async (req, res) => {
             const email = req.params.email
-            console.log(email);
             const user = await usersCollection.findOne({ email: email })
             if (!user) {
                 return res.status(404).send({ message: 'User not found.' })
@@ -207,7 +204,6 @@ async function run() {
         // get trainer id 
         app.get('/trainer-id/:email', async (req, res) => {
             const trainer = await trainersCollection.findOne({ email: req.params?.email })
-            console.log(trainer, 'trainer');
             res.send({ trainerId: trainer?._id })
         })
 
@@ -215,7 +211,7 @@ async function run() {
         app.patch('/trainers/applicants/confirm/:id', verifyToken, async (req, res) => {
             const id = new ObjectId(req.params.id)
             const email = req.body.email;
-            console.log(id);
+           
             const result = await trainersCollection.updateOne(
                 { _id: id },
                 {
@@ -224,7 +220,6 @@ async function run() {
                     }
                 }
             )
-            console.log(result);
             const updateToTrainer = await usersCollection.findOneAndUpdate({ email }, {
                 $set: {
                     role: "trainer",
@@ -236,7 +231,6 @@ async function run() {
         app.patch('/trainers/applicants/reject/:id', verifyToken, async (req, res) => {
             const id = new ObjectId(req.params.id)
             const feedback = req.body?.feedback;
-            console.log(feedback);
             const result = await trainersCollection.updateOne(
                 { _id: id },
                 {
@@ -246,7 +240,6 @@ async function run() {
                     }
                 }
             )
-            console.log(result);
             res.send(result)
         })
 
@@ -270,7 +263,6 @@ async function run() {
             })
             // delete his slots
             const deleteSlot = await slotsCollection.deleteMany({ trainerEmail: email })
-            console.log(deleteSlot)
             // remove him from trainers collection
             const removed = await trainersCollection.deleteOne({ _id: id })
             res.send(removed)
@@ -407,7 +399,6 @@ async function run() {
         app.get('/slots/:email', async (req, res) => {
             const email = req.params.email
             const trainer = await trainersCollection.findOne({ email: email })
-            console.log(trainer);
             if (!trainer) {
                 return res.status(404).send({ message: 'Trainer not found.' })
             }
@@ -611,7 +602,6 @@ async function run() {
         //     'Pinged your deployment. You successfully connected to MongoDB!'
         // )
     } catch (error) {
-        console.log(error);
     }
     finally { }
 }
