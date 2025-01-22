@@ -114,6 +114,7 @@ async function run() {
         // get user role by email 
         app.get('/users/role/:email', verifyToken, async (req, res) => {
             const email = req.params.email
+            console.log(email);
             const user = await usersCollection.findOne({ email: email })
             if (!user) {
                 return res.status(404).send({ message: 'User not found.' })
@@ -131,7 +132,7 @@ async function run() {
             res.send(user)
         })
         // save  a user in db 
-        app.post('/users/:email', verifyToken, async (req, res) => {
+        app.post('/users/:email',  async (req, res) => {
             const email = req.params.email
             const user = req.body
             // check if user exists in db
@@ -162,7 +163,7 @@ async function run() {
 
         // Trainer releted api ----------------------------------
         // get all trainers only for admin
-        app.get('/trainers', verifyToken, verifyAdmin, async (req, res) => {
+        app.get('/trainers', async (req, res) => {
             const { status } = req.query;
             const result = await trainersCollection.find({ status: status }).toArray()
             res.send(result)
@@ -572,7 +573,7 @@ async function run() {
             const email = req.params.email
             const user = await usersCollection.findOne({ email: email })
             if (!user) {
-                return res.status(404).send({ message: 'User not found.' })
+                return res.send({ message: 'User not found.' })
             }
             const bookings = await bookingsCollection.find({ userEmail: user.email }).toArray()
             res.send(bookings)
