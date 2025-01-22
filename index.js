@@ -180,7 +180,7 @@ async function run() {
             res.send(result)
         })
         // get a trainer by id only for admin 
-        app.get('/trainers/:id', verifyToken, verifyAdmin, async (req, res) => {
+        app.get('/trainers/:id', async (req, res) => {
             const id = new ObjectId(req.params.id)
             const trainer = await trainersCollection.findOne({ _id: id })
             if (!trainer) {
@@ -191,7 +191,7 @@ async function run() {
         app.get('/trainer-status/:email', async (req, res) => {
             const trainer = await trainersCollection.findOne({ email: req.params?.email })
             if (!trainer) {
-                return res.send({ message: 'Trainer not found' })
+                return res.send({ message: 'Trainer not found',status:false })
             }
             res.send(trainer)
         })
@@ -389,7 +389,7 @@ async function run() {
         })
         // slots releted api -------------------------------
         // get all slots for a trainer by email 
-        app.get('/slots/:email', verifyToken, verifyTrainer, async (req, res) => {
+        app.get('/slots/:email', async (req, res) => {
             const email = req.params.email
             const trainer = await trainersCollection.findOne({ email: email })
             if (!trainer) {
