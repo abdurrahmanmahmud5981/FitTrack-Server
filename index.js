@@ -40,30 +40,10 @@ const verifyToken = (req, res, next) => {
 }
 
 
-// Middleware for admin
-const verifyAdmin = (req, res, next) => {
-    verifyToken(req, res, () => {
-        if (req.decoded.role !== "admin") {
-            return res.status(403).send({ message: "Access denied! Admins only." });
-        }
-        next();
-    });
-};
-
-// Middleware for trainer
-const verifyTrainer = (req, res, next) => {
-    verifyToken(req, res, () => {
-        if (req.decoded.role !== "trainer") {
-            return res.status(403).send({ message: "Access denied! Trainers only." });
-        }
-        next();
-    });
-};
-
-// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.fxybk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.fxybk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 
-const uri = `mongodb://localhost:27017`
+// const uri = `mongodb://localhost:27017`
 
 
 const client = new MongoClient(uri, {
@@ -86,6 +66,21 @@ async function run() {
         const bookingsCollection = db.collection('bookings');
         const reviewsCollection = db.collection('reviews');
 
+
+        // Middleware for  admin 
+        const verifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email;
+            const user = await usersCollection.findOne({ email });
+            if (user.role !== "admin") return res.status(403).send({ message: "Access denied! Admin only." });
+            next();
+        }
+        // Middleware for trainer
+        const verifyTrainer = async (req, res, next) => {
+            const email = req.decoded.email;
+            const user = await usersCollection.findOne({ email });
+            if (user.role !== "trainer") return res.status(403).send({ message: "Access denied! Trainers only." });
+            next();
+        }
 
 
         // jwt releted api 
@@ -117,7 +112,7 @@ async function run() {
 
         // user releted api
         // get user role by email 
-        app.get('/users/role/:email', async (req, res) => {
+        app.get('/users/role/:email', verifyToken, async (req, res) => {
             const email = req.params.email
             const user = await usersCollection.findOne({ email: email })
             if (!user) {
@@ -127,7 +122,7 @@ async function run() {
         })
 
         // get a user by email
-        app.get('/users/:email', async (req, res) => {
+        app.get('/users/:email', verifyToken, async (req, res) => {
             const email = req.params.email
             const user = await usersCollection.findOne({ email: email })
             if (!user) {
@@ -136,7 +131,7 @@ async function run() {
             res.send(user)
         })
         // save  a user in db 
-        app.post('/users/:email', async (req, res) => {
+        app.post('/users/:email', verifyToken, async (req, res) => {
             const email = req.params.email
             const user = req.body
             // check if user exists in db
@@ -160,14 +155,14 @@ async function run() {
                     }
                 }
             )
-            res.send(updatedUser)
+            res.send(result)
         })
 
 
 
         // Trainer releted api ----------------------------------
         // get all trainers only for admin
-        app.get('/trainers', async (req, res) => {
+        app.get('/trainers', verifyToken, verifyAdmin, async (req, res) => {
             const { status } = req.query;
             const result = await trainersCollection.find({ status: status }).toArray()
             res.send(result)
@@ -184,8 +179,8 @@ async function run() {
             const result = await trainersCollection.insertOne(trainer)
             res.send(result)
         })
-        // get a trainer by id 
-        app.get('/trainers/:id', async (req, res) => {
+        // get a trainer by id only for admin 
+        app.get('/trainers/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = new ObjectId(req.params.id)
             const trainer = await trainersCollection.findOne({ _id: id })
             if (!trainer) {
@@ -194,7 +189,6 @@ async function run() {
             res.send(trainer)
         })
         app.get('/trainer-status/:email', async (req, res) => {
-
             const trainer = await trainersCollection.findOne({ email: req.params?.email })
             if (!trainer) {
                 return res.status(404).send({ message: 'Trainer not found.' })
@@ -202,13 +196,13 @@ async function run() {
             res.send(trainer)
         })
         // get trainer id 
-        app.get('/trainer-id/:email', async (req, res) => {
+        app.get('/trainer-id/:email', verifyToken, async (req, res) => {
             const trainer = await trainersCollection.findOne({ email: req.params?.email })
             res.send({ trainerId: trainer?._id })
         })
 
-        // update trainer status in db
-        app.patch('/trainers/applicants/confirm/:id', verifyToken, async (req, res) => {
+        // update trainer status in db admin only 
+        app.patch('/trainers/applicants/confirm/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = new ObjectId(req.params.id)
             const email = req.body.email;
 
@@ -228,7 +222,7 @@ async function run() {
             res.send(result)
         })
         // reject aa applicent 
-        app.patch('/trainers/applicants/reject/:id', verifyToken, async (req, res) => {
+        app.patch('/trainers/applicants/reject/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = new ObjectId(req.params.id)
             const feedback = req.body?.feedback;
             const result = await trainersCollection.updateOne(
@@ -244,7 +238,7 @@ async function run() {
         })
 
         // delete a trainer in db 
-        app.delete('/trainers/:id', verifyToken, async (req, res) => {
+        app.delete('/trainers/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = new ObjectId(req.params.id)
             const email = req.query.email;
             // delete from classes collection 
@@ -319,7 +313,7 @@ async function run() {
 
 
         // add a class only for admin 
-        app.post('/classes', verifyToken, verifyToken, async (req, res) => {
+        app.post('/classes', verifyToken, verifyAdmin, async (req, res) => {
             const classObj = req.body
             const result = await classesCollection.insertOne({ ...classObj, totalBookings: 0 })
             res.send(result)
@@ -335,8 +329,8 @@ async function run() {
             res.send(classObj)
         })
 
-        // update class info in db
-        app.patch('/classes/:name', verifyToken, async (req, res) => {
+        // update class info in db only for trainer 
+        app.patch('/classes/:name', verifyToken, verifyTrainer, async (req, res) => {
             const name = req.params.name;
             const newTrainer = req.body; // The new trainer to add
 
@@ -387,16 +381,15 @@ async function run() {
             res.send(result)
         })
 
-        // delete a class only for admin 
+        // delete a class only for admin  {optional}
         app.delete('/classes/:name', verifyToken, async (req, res) => {
             const name = req.params.name;
             const result = await classesCollection.deleteOne({ name: name })
             res.send(result)
         })
-
         // slots releted api -------------------------------
         // get all slots for a trainer by email 
-        app.get('/slots/:email', async (req, res) => {
+        app.get('/slots/:email', verifyToken, verifyTrainer, async (req, res) => {
             const email = req.params.email
             const trainer = await trainersCollection.findOne({ email: email })
             if (!trainer) {
@@ -417,7 +410,7 @@ async function run() {
         })
 
         // save  a slot in db
-        app.post('/slots', verifyToken, async (req, res) => {
+        app.post('/slots', verifyToken, verifyTrainer, async (req, res) => {
             const result = await slotsCollection.insertOne(req.body);
             res.send(result)
         })
@@ -464,7 +457,7 @@ async function run() {
             }
         })
         // delete a slot in db
-        app.delete('/slots/:id', verifyToken, async (req, res) => {
+        app.delete('/slots/:id', verifyToken, verifyTrainer, async (req, res) => {
             const id = new ObjectId(req.params.id)
             const result = await slotsCollection.deleteOne({ _id: id })
             res.send(result)
@@ -529,7 +522,7 @@ async function run() {
         })
 
         // update forum-post info in db
-        app.patch('/forum-posts/:id', verifyToken, async (req, res) => {
+        app.patch('/forum-posts/:id', verifyToken,verifyTrainer, async (req, res) => {
             const id = new ObjectId(req.params.id)
             const updatedForumPost = req.body
             const result = await forumPostsCollection.updateOne(
@@ -542,7 +535,7 @@ async function run() {
                     }
                 }
             )
-            res.send(updatedForumPost)
+            res.send(result)
         })
 
 
@@ -585,7 +578,7 @@ async function run() {
             res.send(bookings)
         })
         // get all bookings for admin only 
-        app.get('/admin/overview', verifyToken, async (req, res) => {
+        app.get('/admin/overview', verifyToken,verifyAdmin, async (req, res) => {
             const totalSubscribers = await subscribersCollection.estimatedDocumentCount();
             const bookings = await bookingsCollection.aggregate([
                 { $sort: { _id: -1 } },
