@@ -60,10 +60,10 @@ const verifyTrainer = (req, res, next) => {
     });
 };
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.fxybk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.fxybk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 
-// const uri = `mongodb://localhost:27017`
+const uri = `mongodb://localhost:27017`
 
 
 const client = new MongoClient(uri, {
@@ -419,6 +419,16 @@ async function run() {
         // save  a slot in db
         app.post('/slots', verifyToken, async (req, res) => {
             const result = await slotsCollection.insertOne(req.body);
+            res.send(result)
+        })
+
+        // update a slot in db
+        app.patch('/slots/:id', verifyToken, async (req, res) => {
+            const id = new ObjectId(req.params.id)
+            const result = await slotsCollection.updateOne(
+                { _id: id },
+                { $set: req.body }
+            )
             res.send(result)
         })
         // delete a slot in db
