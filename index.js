@@ -114,7 +114,6 @@ async function run() {
         // get user role by email 
         app.get('/users/role/:email', verifyToken, async (req, res) => {
             const email = req.params.email
-            console.log(email);
             const user = await usersCollection.findOne({ email: email })
             if (!user) {
                 return res.status(404).send({ message: 'User not found.' })
@@ -192,7 +191,7 @@ async function run() {
         app.get('/trainer-status/:email', async (req, res) => {
             const trainer = await trainersCollection.findOne({ email: req.params?.email })
             if (!trainer) {
-                return res.status(404).send({ message: 'Trainer not found.' })
+                return res.send({ message: 'Trainer not found' })
             }
             res.send(trainer)
         })
