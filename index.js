@@ -20,7 +20,7 @@ const corsOptions = {
 }
 app.use(cors(corsOptions))
 
-app.use(express.json()) 
+app.use(express.json())
 app.use(cookieParser())
 app.use(morgan('dev'))
 
@@ -211,7 +211,7 @@ async function run() {
         app.patch('/trainers/applicants/confirm/:id', verifyToken, async (req, res) => {
             const id = new ObjectId(req.params.id)
             const email = req.body.email;
-           
+
             const result = await trainersCollection.updateOne(
                 { _id: id },
                 {
@@ -425,11 +425,43 @@ async function run() {
         // update a slot in db
         app.patch('/slots/:id', verifyToken, async (req, res) => {
             const id = new ObjectId(req.params.id)
-            const result = await slotsCollection.updateOne(
-                { _id: id },
-                { $set: req.body }
-            )
-            res.send(result)
+            const member = req.body;
+
+
+            try {
+                // Check if 
+                const isHeBooked = await slotsCollection.findOne({
+                    _id: id,
+                    "members.email": member?.email,
+                });
+
+                if (isHeBooked) {
+
+                    return res.status(200).send({
+                        message: "You have already booked the slot.",
+                    });
+                }
+
+                // Add the new member to the slot 
+                const result = await slotsCollection.updateOne(
+                    { _id: id }, // Find the slot
+                    {
+                        $addToSet: { members: member }, // Add the new member  if not already present
+                    }
+                );
+
+                if (result.modifiedCount > 0) {
+                    return res.status(200).send({
+                        message: "member added successfully to the slot.",
+                        member,
+                    });
+                }
+
+                res.status(404).send({ message: "slot not found." });
+            } catch (error) {
+                console.error("Error adding member:", error);
+                res.status(500).send({ message: "Internal server error", error });
+            }
         })
         // delete a slot in db
         app.delete('/slots/:id', verifyToken, async (req, res) => {
