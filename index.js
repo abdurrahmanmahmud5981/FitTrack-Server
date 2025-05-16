@@ -111,6 +111,20 @@ async function run() {
 
 
         // user releted api
+        // get verified admin
+        app.get("/user/admin",verifyToken,verifyAdmin,  async (req, res) => {
+            const email = req.query.email;
+            console.log(email)
+            // console.log(email, req.decoded.email);
+            const user = await usersCollection.findOne({ email: email });
+            console.log(user)
+            if (!user) {
+                return res.status(404).send({ message: 'User not found.' });
+            }
+            const isAdmin = user.role === "admin";
+            res.send({ isAdmin }); 
+        });
+
         // get user role by email 
         app.get('/users/role/:email', verifyToken, async (req, res) => {
             const email = req.params.email
@@ -131,7 +145,7 @@ async function run() {
             res.send(user)
         })
         // save  a user in db 
-        app.post('/users/:email',  async (req, res) => {
+        app.post('/users/:email', async (req, res) => {
             const email = req.params.email
             const user = req.body
             // check if user exists in db
@@ -191,7 +205,7 @@ async function run() {
         app.get('/trainer-status/:email', async (req, res) => {
             const trainer = await trainersCollection.findOne({ email: req.params?.email })
             if (!trainer) {
-                return res.send({ message: 'Trainer not found',status:false })
+                return res.send({ message: 'Trainer not found', status: false })
             }
             res.send(trainer)
         })
@@ -522,7 +536,7 @@ async function run() {
         })
 
         // update forum-post info in db
-        app.patch('/forum-posts/:id', verifyToken,verifyTrainer, async (req, res) => {
+        app.patch('/forum-posts/:id', verifyToken, verifyTrainer, async (req, res) => {
             const id = new ObjectId(req.params.id)
             const updatedForumPost = req.body
             const result = await forumPostsCollection.updateOne(
@@ -578,7 +592,7 @@ async function run() {
             res.send(bookings)
         })
         // get all bookings for admin only 
-        app.get('/admin/overview', verifyToken,verifyAdmin, async (req, res) => {
+        app.get('/admin/overview', verifyToken, verifyAdmin, async (req, res) => {
             const totalSubscribers = await subscribersCollection.estimatedDocumentCount();
             const bookings = await bookingsCollection.aggregate([
                 { $sort: { _id: -1 } },
@@ -592,7 +606,7 @@ async function run() {
                         },
                     },
                 },
- 
+
                 {
                     $project: {
                         _id: 1,
@@ -632,7 +646,7 @@ async function run() {
 
         // update user info in db
 
-        // await client.db('admin').command({ ping: 1 })
+        await client.db('admin').command({ ping: 1 })
         // console.log(
         //     'Pinged your deployment. You successfully connected to MongoDB!'
         // )
