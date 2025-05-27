@@ -27,10 +27,12 @@ app.use(morgan('dev'))
 
 // verify token 
 const verifyToken = (req, res, next) => {
-    if (!req.headers.authorization) {
+    // console.log('req.headers.authorization', req.headers)
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    // console.log('token', token)
+    if (!token) {
         return res.status(401).send({ message: 'forbidden! No token provided.' });
     }
-    const token = req.headers.authorization.split(' ')[1];
     jwt.verify(token, process.env.TOKEN_SECRET, (error, decoded) => {
         if (error) return res.status(403).send({ message: 'Token is not valid.' });
         req.decoded = decoded;
@@ -108,16 +110,16 @@ async function run() {
             const result = await subscribersCollection.insertOne(subscriber)
             res.send(result)
         })
-
+ 
 
         // user releted api
         // get verified admin
-        app.get("/user/admin",verifyToken,verifyAdmin,  async (req, res) => {
+        app.get("/user/admin",verifyToken, async (req, res) => {
             const email = req.query.email;
-            console.log(email)
+            // console.log("Email:", email)
             // console.log(email, req.decoded.email);
             const user = await usersCollection.findOne({ email: email });
-            console.log(user)
+            // console.log(user)
             if (!user) {
                 return res.status(404).send({ message: 'User not found.' });
             }
